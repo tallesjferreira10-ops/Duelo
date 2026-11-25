@@ -593,7 +593,90 @@ function ai(b,dt){
   trace(o,v,bd,b,hit?tg:null,0);if(hit&&MODE!=4){if(tg.drv)damageCar(tg.drv,dd.d*.9);else hurt(tg,b,dd.d)}}}
 
 function frame(now){// Cliente de salas online: cria/entra e recebe presença dos jogadores.
-(()=>{if(window.__d3OnlineInit)return;window.__d3OnlineInit=true;const $=id=>document.getElementById(id);let sock=null;const status=t=>{const e=$('olStatus');if(e)e.textContent=t};function connect(action){const url=$('olServer').value.trim();if(!/^wss?:\/\//i.test(url)){status('Informe o endereço wss:// do servidor publicado.');return}try{if(sock)sock.close();status('Conectando ao servidor...');sock=new WebSocket(url);sock.onopen=()=>{status('Conectado! Solicitando sala...');sock.send(JSON.stringify({action,code:$('olCode').value.trim().toUpperCase(),mode:$('olMode').value,game:'duelo3d',version:1}))};sock.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){status('Resposta inválida do servidor.');return}if(m.type==='room_created'||m.type==='room_joined'){if(m.code)$('olCode').value=m.code;status(m.type==='room_created'?'Sala criada! Envie o código aos seus amigos.':'Você entrou na sala!');$('olPlayers').textContent='Jogadores na sala: '+(m.players||1)+'/4'}else if(m.type==='player_joined'||m.type==='player_left'){$('olPlayers').textContent='Jogadores na sala: '+(m.players||1)+'/4';status(m.type==='player_joined'?'Um jogador entrou na sala.':'Um jogador saiu da sala.')}else if(m.type==='error')status(m.message||'O servidor informou um erro.');else status('Evento recebido: '+(m.type||'mensagem'))};sock.onerror=()=>status('Não foi possível conectar. Confira o endereço e se o servidor está ligado.');sock.onclose=()=>status('Conexão encerrada.')}catch(e){status('Falha ao abrir conexão: '+e.message)}}$('olCreate').onclick=()=>connect('create_room');$('olJoin').onclick=()=>{if(!$('olCode').value.trim()){status('Digite o código da sala para entrar.');return}connect('join_room')};$('olClose').onclick=()=>{$('onlineLobby').style.display='none';if(sock)sock.close()};})();
+   })();(()=>{
+if(window.__d3OnlineInit)return;
+window.__d3OnlineInit=true;
+
+const $=id=>document.getElementById(id);
+let sock=null;
+
+const status=t=>{
+ const e=$('olStatus');
+ if(e)e.textContent=t;
+};
+
+if(!$('olServer').value.trim()){
+ $('olServer').value='wss://duelo-1.onrender.com';
+}
+
+function connect(action){
+ const url=$('olServer').value.trim();
+
+ if(!/^wss?:\/\//i.test(url)){
+  status('Endereço do servidor inválido.');
+  return;
+ }
+
+ try{
+  if(sock)sock.close();
+  status('Conectando ao servidor...');
+
+  sock=new WebSocket(url);
+
+  sock.onopen=()=>{
+   status('Conectado! Solicitando sala...');
+   sock.send(JSON.stringify({
+    action:action,
+    roomCode:$('olCode').value.trim().toUpperCase(),
+    mode:$('olMode').value
+   }));
+  };
+
+  sock.onmessage=e=>{
+   let m;
+   try{m=JSON.parse(e.data)}catch(_){
+    status('Resposta inválida do servidor.');
+    return;
+   }
+
+   if(m.type==='room_created'||m.type==='room_joined'){
+    if(m.roomCode)$('olCode').value=m.roomCode;
+    status(m.type==='room_created'?'Sala criada! Envie o código aos amigos.':'Você entrou na sala!');
+    $('olPlayers').textContent='Jogadores na sala: '+(m.players||1)+'/4';
+   }else if(m.type==='player_joined'||m.type==='player_left'){
+    $('olPlayers').textContent='Jogadores na sala: '+(m.players||1)+'/4';
+    status(m.type==='player_joined'?'Um jogador entrou.':'Um jogador saiu.');
+   }else if(m.type==='error'){
+    status(m.message||'Erro no servidor.');
+   }
+  };
+
+  sock.onerror=()=>status('Falha na conexão. Confira o servidor.');
+  sock.onclose=()=>status('Conexão encerrada.');
+
+ }catch(e){
+  status('Erro: '+e.message);
+ }
+}
+
+$('olCreate').onclick=()=>connect('create_room');
+
+$('olJoin').onclick=()=>{
+ if(!$('olCode').value.trim()){
+  status('Digite o código da sala.');
+  return;
+ }
+ connect('join_room');
+};
+
+$('olClose').onclick=()=>{
+ $('onlineLobby').style.display='none';
+ if(sock){
+  try{sock.send(JSON.stringify({action:'leave_room'}))}catch(e){}
+  sock.close();
+ }
+};
+})();return;window.__d3OnlineInit=true;const $=id=>document.getElementById(id);let sock=null;const status=t=>{const e=$('olStatus');if(e)e.textContent=t};function connect(action){const url=$('olServer').value.trim();if(!/^wss?:\/\//i.test(url)){status('Informe o endereço wss:// do servidor publicado.');return}try{if(sock)sock.close();status('Conectando ao servidor...');sock=new WebSocket(url);sock.onopen=()=>{status('Conectado! Solicitando sala...');sock.send(JSON.stringify({action,code:$('olCode').value.trim().toUpperCase(),mode:$('olMode').value,game:'duelo3d',version:1}))};sock.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch(_){status('Resposta inválida do servidor.');return}if(m.type==='room_created'||m.type==='room_joined'){if(m.code)$('olCode').value=m.code;status(m.type==='room_created'?'Sala criada! Envie o código aos seus amigos.':'Você entrou na sala!');$('olPlayers').textContent='Jogadores na sala: '+(m.players||1)+'/4'}else if(m.type==='player_joined'||m.type==='player_left'){$('olPlayers').textContent='Jogadores na sala: '+(m.players||1)+'/4';status(m.type==='player_joined'?'Um jogador entrou na sala.':'Um jogador saiu da sala.')}else if(m.type==='error')status(m.message||'O servidor informou um erro.');else status('Evento recebido: '+(m.type||'mensagem'))};sock.onerror=()=>status('Não foi possível conectar. Confira o endereço e se o servidor está ligado.');sock.onclose=()=>status('Conexão encerrada.')}catch(e){status('Falha ao abrir conexão: '+e.message)}}$('olCreate').onclick=()=>connect('create_room');$('olJoin').onclick=()=>{if(!$('olCode').value.trim()){status('Digite o código da sala para entrar.');return}connect('join_room')};$('olClose').onclick=()=>{$('onlineLobby').style.display='none';if(sock)sock.close()};})();
 requestAnimationFrame(frame);const dt=Math.min((now-(frame.l||now))/1000,.05);frame.l=now;tm+=dt;if(st=='play'){plt+=dt;PLN.forEach((g,i)=>{g.visible=plt<8;if(g.userData.pr)g.userData.pr.rotation.x+=dt*45;g.position.x=(i?-1:1)*(-8+plt*26)})}
  if(st=='play'){P.forEach(p=>p.on&&upd(p,dt));B.forEach(b=>ai(b,dt));CAR.forEach(c=>carUpd(c,dt));modes(dt)}
  for(let i=FX.length-1;i>=0;i--){const e=FX[i];e.t-=dt;
